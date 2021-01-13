@@ -1,5 +1,4 @@
 # import the necessary packages
-from click._compat import raw_input
 from imutils.video import VideoStream
 from imutils.video import FPS
 from gtts import gTTS
@@ -8,9 +7,10 @@ import argparse
 import imutils
 import time
 import cv2
-#import playsound
+from playsound import playsound
 import os
 import threading
+
 import text_to_speech as speech
 import statistics
 
@@ -27,9 +27,13 @@ args = vars(ap.parse_args())
 # initialize the list of class labels MobileNet SSD was trained to
 # detect, then generate a set of bounding box colors for each class
 CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
-           "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
-           "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
+           "bottle", "bus", "mobil", "cat", "kursi", "cow", "diningtable",
+           "dog", "horse", "sepedamotor", "orang", "pottedplant", "sheep",
            "sofa", "train", "tvmonitor"]
+IGNORE = set(["background", "aeroplane", "bicycle", "bird", "boat",
+	"bottle", "bus", "cat", "cow", "diningtable",
+	"dog", "horse", "pottedplant", "sheep",
+	"sofa", "train", "tvmonitor"])
 COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 
 # load our serialized model from disk
@@ -48,8 +52,9 @@ stop = 0
 
 def task1():
 
-
+ #vs = VideoStream('sample.mkv').start()
  vs = VideoStream(src=0).start()
+ #vs = cv2.VideoCapture('sample.mp4')
  time.sleep(2.0)
  fps = FPS().start()
  # loop over the frames from the video stream
@@ -62,8 +67,7 @@ def task1():
 
     # grab the frame dimensions and convert it to a blob
     (h, w) = frame.shape[:2]
-    blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)),
-                                 0.007843, (300, 300), 127.5)
+    blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 0.007843, (300, 300), 127.5)
 
     # pass the blob through the network and obtain the detections and
     # predictions
@@ -83,25 +87,26 @@ def task1():
             # `detections`, then compute the (x, y)-coordinates of
             # the bounding box for the object
             idx = int(detections[0, 0, i, 1])
+
+            if CLASSES[idx] in IGNORE:
+                continue
+
             box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
             (startX, startY, endX, endY) = box.astype("int")
 
             # draw the prediction on the frame
-            label = "{}: {:.2f}%".format(CLASSES[idx],
-                                         confidence * 100)
+            label = "{}: {:.2f}%".format(CLASSES[idx], confidence * 100)
 
-            cv2.rectangle(frame, (startX, startY), (endX, endY),
-                          COLORS[idx], 2)
+            cv2.rectangle(frame, (startX, startY), (endX, endY), COLORS[idx], 2)
             y = startY - 15 if startY - 15 > 15 else startY + 15
-            cv2.putText(frame, label, (startX, y),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
-            if CLASSES[idx] == 'person':
+            cv2.putText(frame, label, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
+            if CLASSES[idx] == 'orang':
                 orang = 1
-            elif CLASSES[idx] == 'chair':
+            elif CLASSES[idx] == 'kursi':
                 kursi = 1
-            elif CLASSES[idx] == 'motorbike':
+            elif CLASSES[idx] == 'sepedamotor':
                 motor = 1
-            elif CLASSES[idx] == 'car':
+            elif CLASSES[idx] == 'mobil':
                 mobil = 1
             else:
                 orang = 0
@@ -135,16 +140,19 @@ def task2():
 
     while True:
         if orang == 1:
-            speech.speak("Orang", lang="id")
+            playsound('Orang.mp3')
             orang = 0
         elif kursi == 1:
-            speech.speak("Kursi", lang="id")
+            #speech.speak("Kursi", lang="id")
+            playsound('Kursi.mp3')
             kursi = 0
         elif motor == 1:
-            speech.speak("Motor", lang="id")
+            #speech.speak("Motor", lang="id")
+            playsound('Motor.mp3')
             motor = 0
         elif mobil == 1:
-            speech.speak("Mobil", lang="id")
+            #speech.speak("Mobil", lang="id")
+            playsound('Mobil.mp3')
             mobil = 0
         elif stop == 1:
             break
